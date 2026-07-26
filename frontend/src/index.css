@@ -1,0 +1,26 @@
+:root {
+  --color-blush: #f7c9de;
+  --color-lilac: #c9b6f2;
+  --color-honey: #ffe3a3;
+  --color-mint: #b9e3d0;
+  --color-plum: #4b3a78;
+  --color-cream: #fff7fb;
+
+  --font-heading: "Fredoka", sans-serif;
+  --font-body: "Quicksand", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-cream);
+  color: var(--color-plum);
+  font-family: var(--font-body);
+}
+
+h1, h2, h3, .heading, .countdown-number {
+  font-family: var(--font-heading);
+}
