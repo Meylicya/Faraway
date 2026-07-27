@@ -15,16 +15,19 @@ const app = express();
 app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:5173" }));
 app.use(express.json());
 
-app.get("/health", (req, res) => res.json({ ok: true }));
-app.use("/api/auth", authRoutes);
-app.use("/api/rooms", roomRoutes);
-
 const server = http.createServer(app);
 const io = new SocketIOServer(server, {
   cors: { origin: process.env.CLIENT_URL || "http://localhost:5173" },
 });
-
 registerRoomSocket(io);
+
+// makes io reachable from REST routes (e.g. rooms.js emits a live update
+// when an invite is accepted, so the owner doesn't need to refresh)
+app.set("io", io);
+
+app.get("/health", (req, res) => res.json({ ok: true }));
+app.use("/api/auth", authRoutes);
+app.use("/api/rooms", roomRoutes);
 
 const PORT = process.env.PORT || 4000;
 

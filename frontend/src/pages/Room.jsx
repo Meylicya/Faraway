@@ -39,10 +39,15 @@ export default function Room() {
     socket.on("countdown:update", ({ target }) =>
       setRoom((r) => ({ ...r, countdown_target: target }))
     );
+    socket.on("room:accepted", async () => {
+      const { room } = await api.myRoom();
+      setRoom(room);
+    });
 
     return () => {
       socket.off("presence:update");
       socket.off("countdown:update");
+      socket.off("room:accepted");
       socket.disconnect();
     };
   }, [room?.id]);
@@ -125,9 +130,7 @@ export default function Room() {
         <h1 className="heading" style={{ color: "var(--color-plum)" }}>
           Faraway
         </h1>
-        <p style={{ opacity: 0.7 }}>
-          {online.length > 1 ? "you're both here 💛" : "waiting for them to show up…"}
-        </p>
+        <p style={{ opacity: 0.7 }}>{presenceMessage(room, online)}</p>
       </motion.header>
 
       <Countdown target={room.countdown_target} onSetTarget={setCountdown} />
@@ -146,6 +149,13 @@ export default function Room() {
       </div>
     </div>
   );
+}
+
+function presenceMessage(room, online) {
+  if (room.status === "pending") {
+    return `invite sent to ${room.invited_email} — waiting for them to accept`;
+  }
+  return online.length > 1 ? "you're both here 💛" : "waiting for them to show up…";
 }
 
 function Centered({ children }) {

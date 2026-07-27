@@ -4,14 +4,14 @@ import { requireAuth } from "./middleware.js";
 
 const router = Router();
 
-// inviting someone by email after cearting a room.
+// Create a room and invite someone by email.
 router.post("/", requireAuth, async (req, res) => {
   const { invitedEmail } = req.body;
   if (!invitedEmail) return res.status(400).json({ error: "invitedEmail is required" });
 
   const db = await getDb();
 
-  // user can only own/belong to one room for v1 (exactly-2 model, single room)
+  // enforce: a user can only own/belong to one room for v1 (exactly-2 model, single room)
   const existing = await db.get(
     "SELECT id FROM rooms WHERE owner_id = ? OR member_id = ?",
     req.user.userId,
@@ -28,7 +28,7 @@ router.post("/", requireAuth, async (req, res) => {
   res.status(201).json({ roomId: result.lastID });
 });
 
-// Accepting a pending invite (called when the invited email signs up / logs in and opens the invite).
+// Accept a pending invite (called when the invited email signs up / logs in and opens the invite).
 router.post("/:roomId/accept", requireAuth, async (req, res) => {
   const db = await getDb();
   const room = await db.get("SELECT * FROM rooms WHERE id = ?", req.params.roomId);
@@ -42,10 +42,16 @@ router.post("/:roomId/accept", requireAuth, async (req, res) => {
     req.user.userId,
     room.id
   );
+
+  const io = req.app.get("io");
+  io.to(`room:${room.id}`).emit("room:accepted");
+
   res.json({ ok: true });
 });
 
 // Dev/demo convenience for guest accounts: join any single pending room instead
+// of needing the invite to match your exact email. Not meant for production —
+// real invites still go through the email-matched /accept route above.
 router.post("/join-open", requireAuth, async (req, res) => {
   const db = await getDb();
 
@@ -70,8 +76,9 @@ router.post("/join-open", requireAuth, async (req, res) => {
   res.json({ roomId: openRoom.id });
 });
 
-// looking up a pending invite addressed to the logged-in user's email, so the
-// frontend can show "X invited you" with an Accept button 
+// Look up a pending invite addressed to the logged-in user's email, so the
+// frontend can show "X invited you" with an Accept button instead of requiring
+// a manual API call.
 router.get("/pending-invite", requireAuth, async (req, res) => {
   const db = await getDb();
   const invite = await db.get(
