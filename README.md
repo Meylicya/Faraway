@@ -12,12 +12,10 @@ faraway/
   frontend/   React (Vite) + React Three Fiber + Framer Motion
 ```
 
-## Running locally
-
 **Backend**
 ```bash
 cd backend
-cp .env.example .env   # edit JWT_SECRET at least
+cp .env.example .env  
 npm install
 npm run dev            
 ```
